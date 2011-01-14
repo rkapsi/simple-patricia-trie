@@ -18,6 +18,6 @@ This is all to keep the implementation simple, lightweight and easy to extend.
 
 ## org.ardverk.collection.spt.ints
 
-This is an example how to change the PATRICIA Trie from a data structure that stores `Object` -> `Object` pairs to a data structure that stores `int` -> `int` pairs. 
+This is an example how to change the PATRICIA Trie from a data structure that stores `Object` -> `Object` pairs to a data structure that stores `int` -> `int` pairs. It cuts away a lot of the slack that is necessary if you're dealing with `Object`s.
 
 Use these three PATRICIA Tries as a starting point for your own customized PATRICIA Trie implementations.
