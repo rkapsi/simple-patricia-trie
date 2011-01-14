@@ -20,4 +20,6 @@ This is all to keep the implementation simple, lightweight and easy to extend.
 
 This is an example how to change the PATRICIA Trie from a data structure that stores `Object` -> `Object` pairs to a data structure that stores `int` -> `int` pairs. 
 
+Use these three PATRICIA Tries as a starting point for your own customized PATRICIA Trie implementations.
+
 If you need a PATRICIA Trie that implements the `SortedMap` interface or removes elements faster than _O(n)_ time then please see my other [patricia-trie](http://github.com/rkapsi/patricia-trie) project.
