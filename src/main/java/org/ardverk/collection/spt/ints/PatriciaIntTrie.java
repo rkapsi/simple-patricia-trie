@@ -18,9 +18,7 @@ package org.ardverk.collection.spt.ints;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 
 public class PatriciaIntTrie extends AbstractIntTrie implements Serializable {
     
@@ -30,7 +28,7 @@ public class PatriciaIntTrie extends AbstractIntTrie implements Serializable {
     
     private int size = 0;
     
-    private transient volatile Set<IntMap.Entry> entrySet = null;
+    private transient volatile IntMap.Entry[] entrySet = null;
     
     private transient volatile int[] keySet = null;
     
@@ -210,20 +208,22 @@ public class PatriciaIntTrie extends AbstractIntTrie implements Serializable {
     }
     
     @Override
-    public Set<IntMap.Entry> entrySet() {
+    public IntMap.Entry[] entrySet() {
         if (entrySet == null) {
-            final Set<IntMap.Entry> entries 
-                = new ArrayListSet<IntMap.Entry>(size());
+            final IntMap.Entry[] entries = new IntMap.Entry[size()];
             
             traverse(new Cursor() {
+                
+                private int index = 0;
+                
                 @Override
                 public boolean select(IntMap.Entry entry) {
-                    entries.add(entry);
+                    entries[index++] = entry;
                     return true;
                 }
             });
             
-            entrySet = Collections.unmodifiableSet(entries);
+            entrySet = entries;
         }
         return entrySet;
     }
@@ -231,14 +231,15 @@ public class PatriciaIntTrie extends AbstractIntTrie implements Serializable {
     @Override
     public int[] keySet() {
         if (keySet == null) {
-            
-            final int[] index = { 0 };
             final int[] entries = new int[size()];
             
             traverse(new Cursor() {
+                
+                private int index = 0;
+                
                 @Override
                 public boolean select(IntMap.Entry entry) {
-                    entries[index[0]++] = entry.getKey();
+                    entries[index++] = entry.getKey();
                     return true;
                 }
             });
@@ -252,13 +253,15 @@ public class PatriciaIntTrie extends AbstractIntTrie implements Serializable {
     public int[] values() {
         if (values == null) {
             
-            final int[] index = { 0 };
             final int[] entries = new int[size()];
             
             traverse(new Cursor() {
+                
+                private int index = 0;
+                
                 @Override
                 public boolean select(IntMap.Entry entry) {
-                    entries[index[0]++] = entry.getValue();
+                    entries[index++] = entry.getValue();
                     return true;
                 }
             });
@@ -435,18 +438,6 @@ public class PatriciaIntTrie extends AbstractIntTrie implements Serializable {
         @Override
         public String toString() {
             return key + " (" + bitIndex + ") -> " + value;
-        }
-    }
-    
-    /**
-     * An {@link ArrayList} that implements the {@link Set} interface.
-     */
-    private static class ArrayListSet<K> extends ArrayList<K> implements Set<K> {
-        
-        private static final long serialVersionUID = -1036159554753667259L;
-
-        public ArrayListSet(int initialCapacity) {
-            super(initialCapacity);
         }
     }
 }

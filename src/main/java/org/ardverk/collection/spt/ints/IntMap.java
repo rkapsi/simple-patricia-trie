@@ -16,8 +16,6 @@
 
 package org.ardverk.collection.spt.ints;
 
-import java.util.Set;
-
 public interface IntMap {
 
     public int put(int key, int value);
@@ -36,7 +34,7 @@ public interface IntMap {
     
     public void clear();
     
-    public Set<Entry> entrySet();
+    public IntMap.Entry[] entrySet();
     
     public int[] keySet();
     
