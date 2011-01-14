@@ -188,6 +188,8 @@ public class PatriciaTrie<K, V> extends AbstractTrie<K, V> implements Serializab
                 Map.Entry<? extends K, ? extends V> e = entries.get(i);
                 put(e.getKey(), e.getValue());
             }
+            
+            return entry.getValue();
         }
         
         return null;
