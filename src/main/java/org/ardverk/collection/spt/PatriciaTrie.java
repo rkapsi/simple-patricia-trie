@@ -170,23 +170,39 @@ public class PatriciaTrie<K, V> extends AbstractTrie<K, V> implements Serializab
                 return root.unsetKeyValue();
             }
             
-            final List<Map.Entry<? extends K, ? extends V>> entries 
-                = new ArrayList<Map.Entry<? extends K, ? extends V>>(size()-1);
+            @SuppressWarnings("unchecked")
+            final Map.Entry<? extends K, ? extends V>[] entries 
+                = new Map.Entry[size()-1];
             
             traverse(new Cursor<K, V>() {
+                
+                private int index = 0;
+                
                 @Override
                 public boolean select(Entry<? extends K, ? extends V> e) {
                     if (entry != e) {
-                        entries.add(e);
+                        
+                        // We must make a copy of the root node
+                        // here or we'll lose the key-value with
+                        // the clear() operation!
+                        if (e == root) {
+                            K key = root.getKey();
+                            V value = root.getValue();
+                            e = new Node<K, V>(key, value, -1);
+                        }
+                        
+                        entries[index++] = e;
                     }
                     return true;
                 }
             });
             
             clear();
-            for (int i = entries.size()-1; i >= 0; --i) {
-                Map.Entry<? extends K, ? extends V> e = entries.get(i);
-                put(e.getKey(), e.getValue());
+            
+            Map.Entry<? extends K, ? extends V> entryToAdd = null;
+            for (int i = 0; i < entries.length; i++) {
+                entryToAdd = entries[i];
+                put(entryToAdd.getKey(), entryToAdd.getValue());
             }
             
             return entry.getValue();

@@ -17,8 +17,6 @@
 package org.ardverk.collection.spt.ints;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
 
 public class PatriciaIntTrie extends AbstractIntTrie implements Serializable {
     
@@ -122,23 +120,36 @@ public class PatriciaIntTrie extends AbstractIntTrie implements Serializable {
                 return root.unsetKeyValue();
             }
             
-            final List<Entry> entries 
-                = new ArrayList<Entry>(size()-1);
-            
+            final Entry[] entries = new Entry[size()-1];
             traverse(new Cursor() {
+                
+                private int index = 0;
+                
                 @Override
                 public boolean select(Entry e) {
                     if (entry != e) {
-                        entries.add(e);
+                        
+                        // We must make a copy of the root node
+                        // here or we'll lose the key-value with
+                        // the clear() operation!
+                        if (e == root) {
+                            int key = root.getKey();
+                            int value = root.getValue();
+                            e = new Node(key, value, -1);
+                        }
+                        
+                        entries[index++] = e;
                     }
                     return true;
                 }
             });
             
             clear();
-            for (int i = entries.size()-1; i >= 0; --i) {
-                Entry e = entries.get(i);
-                put(e.getKey(), e.getValue());
+            
+            Entry entryToAdd = null;
+            for (int i = 0; i < entries.length; i++) {
+                entryToAdd = entries[i];
+                put(entryToAdd.getKey(), entryToAdd.getValue());
             }
             
             return entry.getValue();
@@ -351,7 +362,7 @@ public class PatriciaIntTrie extends AbstractIntTrie implements Serializable {
             }
         }
         
-        throw new IllegalStateException();
+        throw new IllegalStateException(key + ", " + otherKey);
     }
     
     /**
@@ -411,7 +422,7 @@ public class PatriciaIntTrie extends AbstractIntTrie implements Serializable {
         protected Node left;
         
         protected Node right;
-        
+              
         private Node(int key, int value, int bitIndex) {
             this.bitIndex = bitIndex;
             this.key = key;
