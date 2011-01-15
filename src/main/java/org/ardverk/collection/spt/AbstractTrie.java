@@ -119,7 +119,7 @@ abstract class AbstractTrie<K, V> implements Trie<K, V>, Serializable {
     @Override
     public String toString() {
         final StringBuilder buffer = new StringBuilder();
-        buffer.append(getClass().getName()).append("[").append(size()).append("]={\n");
+        buffer.append(getClass().getSimpleName()).append("[").append(size()).append("]={\n");
         
         traverse(new Cursor<K, V>() {
             @Override
