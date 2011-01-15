@@ -27,7 +27,7 @@ abstract class AbstractIntTrie implements IntTrie, Serializable {
 
     @Override
     public int get(int key) {
-        IntMap.Entry node = select(key);
+        Entry node = select(key);
         if (node != null && equals(node.getKey(), key)) {
             return node.getValue();            
         }
@@ -37,14 +37,14 @@ abstract class AbstractIntTrie implements IntTrie, Serializable {
     
     @Override
     public void putAll(IntMap m) {
-        for (IntMap.Entry entry : m.entrySet()) {
+        for (Entry entry : m.entrySet()) {
             put(entry.getKey(), entry.getValue());
         }
     }
     
     @Override
     public boolean containsKey(int key) {
-        IntMap.Entry entry = select(key);
+        Entry entry = select(key);
         return entry != null && equals(key, entry.getKey());
     }
     
@@ -54,7 +54,7 @@ abstract class AbstractIntTrie implements IntTrie, Serializable {
         
         traverse(new Cursor() {
             @Override
-            public boolean select(IntMap.Entry entry) {
+            public boolean select(Entry entry) {
                 if (AbstractIntTrie.equals(value, entry.getValue())) {
                     contains[0] = true;
                     return false;
@@ -68,26 +68,44 @@ abstract class AbstractIntTrie implements IntTrie, Serializable {
     
     @Override
     public int selectKey(int key) {
-        IntMap.Entry entry = select(key);
+        Entry entry = select(key);
         return entry != null ? entry.getKey() : null;
     }
     
     @Override
     public int selectValue(int key) {
-        IntMap.Entry entry = select(key);
+        Entry entry = select(key);
         return entry != null ? entry.getValue() : null;
     }
     
     @Override
     public int firstKey() {
-        IntMap.Entry entry = firstEntry();
+        Entry entry = firstEntry();
         return entry != null ? entry.getKey() : null;
     }
     
     @Override
     public int lastKey() {
-        IntMap.Entry entry = lastEntry();
+        Entry entry = lastEntry();
         return entry != null ? entry.getKey() : null;
+    }
+    
+    @Override
+    public Entry pollFirstEntry() {
+        Entry entry = firstEntry();
+        if (entry != null) {
+            remove(entry.getKey());
+        }
+        return entry;
+    }
+
+    @Override
+    public Entry pollLastEntry() {
+        Entry entry = lastEntry();
+        if (entry != null) {
+            remove(entry.getKey());
+        }
+        return entry;
     }
     
     @Override
@@ -102,7 +120,7 @@ abstract class AbstractIntTrie implements IntTrie, Serializable {
         
         traverse(new Cursor() {
             @Override
-            public boolean select(IntMap.Entry entry) {
+            public boolean select(Entry entry) {
                 buffer.append("    ").append(entry).append("\n");
                 return true;
             }

@@ -52,7 +52,7 @@ public class PatriciaTrie<K, V> extends AbstractTrie<K, V> implements Serializab
     
     private int size = 0;
     
-    private transient volatile Set<Map.Entry<K, V>> entrySet = null;
+    private transient volatile Set<Entry<K, V>> entrySet = null;
     
     private transient volatile Set<K> keySet = null;
     
@@ -85,8 +85,8 @@ public class PatriciaTrie<K, V> extends AbstractTrie<K, V> implements Serializab
     }
     
     @Override
-    public Map.Entry<K, V> select(K key) {
-        Map.Entry<K, V> node = selectR(root.left, key, -1);
+    public Entry<K, V> select(K key) {
+        Entry<K, V> node = selectR(root.left, key, -1);
         if (node != root || !root.empty) {
             return node;
         }
@@ -112,7 +112,7 @@ public class PatriciaTrie<K, V> extends AbstractTrie<K, V> implements Serializab
             return putForNullKey(key, value);
         }
         
-        Map.Entry<K, V> node = select(key);
+        Entry<K, V> node = select(key);
         K existing = null;
         if (node != null) {
             existing = node.getKey();
@@ -161,7 +161,7 @@ public class PatriciaTrie<K, V> extends AbstractTrie<K, V> implements Serializab
     @Override
     public V remove(Object key) {
         @SuppressWarnings("unchecked")
-        final Map.Entry<K, V> entry = select((K)key);
+        final Entry<K, V> entry = select((K)key);
         if (entry != null && equals(key, entry.getKey())) {
             
             // We can take a shortcut for the root Node!
@@ -258,16 +258,16 @@ public class PatriciaTrie<K, V> extends AbstractTrie<K, V> implements Serializab
     }
     
     @Override
-    public Set<Map.Entry<K, V>> entrySet() {
+    public Set<Entry<K, V>> entrySet() {
         if (entrySet == null) {
-            final Set<Map.Entry<K, V>> entries 
-                = new ArrayListSet<Map.Entry<K, V>>(size());
+            final Set<Entry<K, V>> entries 
+                = new ArrayListSet<Entry<K, V>>(size());
             
             traverse(new Cursor<K, V>() {
                 @SuppressWarnings("unchecked")
                 @Override
                 public boolean select(Entry<? extends K, ? extends V> entry) {
-                    entries.add((Map.Entry<K, V>)entry);
+                    entries.add((Entry<K, V>)entry);
                     return true;
                 }
             });
@@ -313,10 +313,9 @@ public class PatriciaTrie<K, V> extends AbstractTrie<K, V> implements Serializab
         return values;
     }
     
-    
     @Override
     public Entry<K, V> firstEntry() {
-        Map.Entry<K, V> entry = followLeft(root.left, -1, root);
+        Entry<K, V> entry = followLeft(root.left, -1, root);
         if (entry != root || !root.empty) {
             return entry;
         }
@@ -325,14 +324,14 @@ public class PatriciaTrie<K, V> extends AbstractTrie<K, V> implements Serializab
 
     @Override
     public Entry<K, V> lastEntry() {
-        Map.Entry<K, V> entry = followRight(root.left, -1);
+        Entry<K, V> entry = followRight(root.left, -1);
         if (entry != root || !root.empty) {
             return entry;
         }
         return null;
     }
     
-    private Map.Entry<K, V> followLeft(Node<K, V> h, int bitIndex, Node<K, V> p) {
+    private Entry<K, V> followLeft(Node<K, V> h, int bitIndex, Node<K, V> p) {
         if (h.bitIndex <= bitIndex) {
             if (h != root || !root.empty) {
                 return h;
@@ -343,14 +342,14 @@ public class PatriciaTrie<K, V> extends AbstractTrie<K, V> implements Serializab
         return followLeft(h.left, h.bitIndex, h);
     }
     
-    private Map.Entry<K, V> followRight(Node<K, V> h, int bitIndex) {
+    private Entry<K, V> followRight(Node<K, V> h, int bitIndex) {
         if (h.bitIndex <= bitIndex) {
             return h;
         }
         
         return followRight(h.right, h.bitIndex);
     }
-    
+
     /**
      * Increments the {@link #size} counter and calls {@link #clearViews()}.
      */
@@ -447,7 +446,7 @@ public class PatriciaTrie<K, V> extends AbstractTrie<K, V> implements Serializab
     /**
      * A node in the {@link Trie}.
      */
-    private static class Node<K, V> implements Map.Entry<K, V>, Serializable {
+    private static class Node<K, V> implements Entry<K, V>, Serializable {
         
         private static final long serialVersionUID = -2409938371345117780L;
 

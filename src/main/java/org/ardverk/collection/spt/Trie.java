@@ -61,6 +61,16 @@ public interface Trie<K, V> extends Map<K, V> {
     public K lastKey();
     
     /**
+     * @see NavigableMap#pollFirstEntry()
+     */
+    public Map.Entry<K, V> pollFirstEntry();
+    
+    /**
+     * @see NavigableMap#pollLastEntry()
+     */
+    public Map.Entry<K, V> pollLastEntry();
+    
+    /**
      * Traverses the {@link Trie} by closeness to the given key.
      */
     public void select(K key, Cursor<? super K, ? super V> cursor);

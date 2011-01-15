@@ -28,7 +28,7 @@ public class PatriciaIntTrie extends AbstractIntTrie implements Serializable {
     
     private int size = 0;
     
-    private transient volatile IntMap.Entry[] entrySet = null;
+    private transient volatile Entry[] entrySet = null;
     
     private transient volatile int[] keySet = null;
     
@@ -42,8 +42,8 @@ public class PatriciaIntTrie extends AbstractIntTrie implements Serializable {
     }
     
     @Override
-    public IntMap.Entry select(int key) {
-        IntMap.Entry node = selectR(root.left, key, -1);
+    public Entry select(int key) {
+        Entry node = selectR(root.left, key, -1);
         if (node != root || !root.empty) {
             return node;
         }
@@ -69,7 +69,7 @@ public class PatriciaIntTrie extends AbstractIntTrie implements Serializable {
             return putForNullKey(key, value);
         }
         
-        IntMap.Entry node = select(key);
+        Entry node = select(key);
         int existing = -1;
         if (node != null) {
             existing = node.getKey();
@@ -113,7 +113,7 @@ public class PatriciaIntTrie extends AbstractIntTrie implements Serializable {
     
     @Override
     public int remove(int key) {
-        final IntMap.Entry entry = select(key);
+        final Entry entry = select(key);
         if (entry != null && equals(key, entry.getKey())) {
             
             // We can take a shortcut for the root Node!
@@ -122,12 +122,12 @@ public class PatriciaIntTrie extends AbstractIntTrie implements Serializable {
                 return root.unsetKeyValue();
             }
             
-            final List<IntMap.Entry> entries 
-                = new ArrayList<IntMap.Entry>(size()-1);
+            final List<Entry> entries 
+                = new ArrayList<Entry>(size()-1);
             
             traverse(new Cursor() {
                 @Override
-                public boolean select(IntMap.Entry e) {
+                public boolean select(Entry e) {
                     if (entry != e) {
                         entries.add(e);
                     }
@@ -137,7 +137,7 @@ public class PatriciaIntTrie extends AbstractIntTrie implements Serializable {
             
             clear();
             for (int i = entries.size()-1; i >= 0; --i) {
-                IntMap.Entry e = entries.get(i);
+                Entry e = entries.get(i);
                 put(e.getKey(), e.getValue());
             }
             
@@ -208,16 +208,16 @@ public class PatriciaIntTrie extends AbstractIntTrie implements Serializable {
     }
     
     @Override
-    public IntMap.Entry[] entrySet() {
+    public Entry[] entrySet() {
         if (entrySet == null) {
-            final IntMap.Entry[] entries = new IntMap.Entry[size()];
+            final Entry[] entries = new Entry[size()];
             
             traverse(new Cursor() {
                 
                 private int index = 0;
                 
                 @Override
-                public boolean select(IntMap.Entry entry) {
+                public boolean select(Entry entry) {
                     entries[index++] = entry;
                     return true;
                 }
@@ -238,7 +238,7 @@ public class PatriciaIntTrie extends AbstractIntTrie implements Serializable {
                 private int index = 0;
                 
                 @Override
-                public boolean select(IntMap.Entry entry) {
+                public boolean select(Entry entry) {
                     entries[index++] = entry.getKey();
                     return true;
                 }
@@ -260,7 +260,7 @@ public class PatriciaIntTrie extends AbstractIntTrie implements Serializable {
                 private int index = 0;
                 
                 @Override
-                public boolean select(IntMap.Entry entry) {
+                public boolean select(Entry entry) {
                     entries[index++] = entry.getValue();
                     return true;
                 }
@@ -273,8 +273,8 @@ public class PatriciaIntTrie extends AbstractIntTrie implements Serializable {
     
     
     @Override
-    public IntMap.Entry firstEntry() {
-        IntMap.Entry entry = followLeft(root.left, -1, root);
+    public Entry firstEntry() {
+        Entry entry = followLeft(root.left, -1, root);
         if (entry != root || !root.empty) {
             return entry;
         }
@@ -282,15 +282,15 @@ public class PatriciaIntTrie extends AbstractIntTrie implements Serializable {
     }
 
     @Override
-    public IntMap.Entry lastEntry() {
-        IntMap.Entry entry = followRight(root.left, -1);
+    public Entry lastEntry() {
+        Entry entry = followRight(root.left, -1);
         if (entry != root || !root.empty) {
             return entry;
         }
         return null;
     }
     
-    private IntMap.Entry followLeft(Node h, int bitIndex, Node p) {
+    private Entry followLeft(Node h, int bitIndex, Node p) {
         if (h.bitIndex <= bitIndex) {
             if (h != root || !root.empty) {
                 return h;
@@ -301,7 +301,7 @@ public class PatriciaIntTrie extends AbstractIntTrie implements Serializable {
         return followLeft(h.left, h.bitIndex, h);
     }
     
-    private IntMap.Entry followRight(Node h, int bitIndex) {
+    private Entry followRight(Node h, int bitIndex) {
         if (h.bitIndex <= bitIndex) {
             return h;
         }
@@ -398,7 +398,7 @@ public class PatriciaIntTrie extends AbstractIntTrie implements Serializable {
     /**
      * A node in the {@link IntTrie}.
      */
-    private static class Node implements IntMap.Entry, Serializable {
+    private static class Node implements Entry, Serializable {
         
         private static final long serialVersionUID = -2409938371345117780L;
 

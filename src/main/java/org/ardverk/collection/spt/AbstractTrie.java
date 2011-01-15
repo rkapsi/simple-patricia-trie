@@ -29,7 +29,7 @@ abstract class AbstractTrie<K, V> implements Trie<K, V>, Serializable {
     @Override
     public V get(Object key) {
         @SuppressWarnings("unchecked")
-        Map.Entry<K, V> node = select((K)key);
+        Entry<K, V> node = select((K)key);
         if (node != null && equals(node.getKey(), key)) {
             return node.getValue();            
         }
@@ -47,7 +47,7 @@ abstract class AbstractTrie<K, V> implements Trie<K, V>, Serializable {
     @Override
     public boolean containsKey(Object key) {
         @SuppressWarnings("unchecked")
-        Map.Entry<K, V> entry = select((K)key);
+        Entry<K, V> entry = select((K)key);
         return entry != null && equals(key, entry.getKey());
     }
     
@@ -71,28 +71,46 @@ abstract class AbstractTrie<K, V> implements Trie<K, V>, Serializable {
     
     @Override
     public K selectKey(K key) {
-        Map.Entry<K, V> entry = select(key);
+        Entry<K, V> entry = select(key);
         return entry != null ? entry.getKey() : null;
     }
     
     @Override
     public V selectValue(K key) {
-        Map.Entry<K, V> entry = select(key);
+        Entry<K, V> entry = select(key);
         return entry != null ? entry.getValue() : null;
     }
     
     @Override
     public K firstKey() {
-        Map.Entry<K, V> entry = firstEntry();
+        Entry<K, V> entry = firstEntry();
         return entry != null ? entry.getKey() : null;
     }
     
     @Override
     public K lastKey() {
-        Map.Entry<K, V> entry = lastEntry();
+        Entry<K, V> entry = lastEntry();
         return entry != null ? entry.getKey() : null;
     }
     
+    @Override
+    public Entry<K, V> pollFirstEntry() {
+        Entry<K, V> entry = firstEntry();
+        if (entry != null) {
+            remove(entry.getKey());
+        }
+        return entry;
+    }
+
+    @Override
+    public Entry<K, V> pollLastEntry() {
+        Entry<K, V> entry = lastEntry();
+        if (entry != null) {
+            remove(entry.getKey());
+        }
+        return entry;
+    }
+
     @Override
     public boolean isEmpty() {
         return size() == 0;

@@ -16,6 +16,9 @@
 
 package org.ardverk.collection.spt.ints;
 
+import java.util.NavigableMap;
+import java.util.SortedMap;
+
 
 /**
  * A simple {@link IntTrie} interface.
@@ -56,6 +59,16 @@ public interface IntTrie extends IntMap {
      * @see SortedMap#lastKey()
      */
     public int lastKey();
+    
+    /**
+     * @see NavigableMap#pollFirstEntry()
+     */
+    public IntMap.Entry pollFirstEntry();
+    
+    /**
+     * @see NavigableMap#pollLastEntry()
+     */
+    public IntMap.Entry pollLastEntry();
     
     /**
      * Traverses the {@link IntTrie} by closeness to the given key.
