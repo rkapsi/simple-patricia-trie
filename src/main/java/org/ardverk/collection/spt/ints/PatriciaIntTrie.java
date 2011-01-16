@@ -195,16 +195,6 @@ public class PatriciaIntTrie extends AbstractIntTrie implements Serializable {
         clear0();
     }
     
-    private RootNode clear0() {
-        RootNode previous = root;
-        
-        root = new RootNode();
-        size = 0;
-        clearViews();
-        
-        return previous;
-    }
-    
     @Override
     public int size() {
         return size;
@@ -326,6 +316,23 @@ public class PatriciaIntTrie extends AbstractIntTrie implements Serializable {
     private void decrementSize() {
         --size;
         clearViews();
+    }
+    
+    /**
+     * Clears the {@link PatriciaIntTrie} and returns the old {@link RootNode}.
+     * The {@link RootNode} may be used to {@link #traverse(RootNode, Cursor)}
+     * the old {@link PatriciaIntTrie}.
+     * 
+     * @see #remove(Object)
+     */
+    private RootNode clear0() {
+        RootNode previous = root;
+        
+        root = new RootNode();
+        size = 0;
+        clearViews();
+        
+        return previous;
     }
     
     /**

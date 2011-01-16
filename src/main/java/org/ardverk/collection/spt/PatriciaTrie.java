@@ -248,16 +248,6 @@ public class PatriciaTrie<K, V> extends AbstractTrie<K, V> implements Serializab
         clear0();
     }
     
-    private RootNode<K, V> clear0() {
-        RootNode<K, V> previous = root;
-        
-        root = new RootNode<K, V>();
-        size = 0;
-        clearViews();
-        
-        return previous;
-    }
-    
     @Override
     public int size() {
         return size;
@@ -370,6 +360,23 @@ public class PatriciaTrie<K, V> extends AbstractTrie<K, V> implements Serializab
     private void decrementSize() {
         --size;
         clearViews();
+    }
+    
+    /**
+     * Clears the {@link PatriciaTrie} and returns the old {@link RootNode}.
+     * The {@link RootNode} may be used to {@link #traverse(RootNode, Cursor)}
+     * the old {@link PatriciaTrie}.
+     * 
+     * @see #remove(Object)
+     */
+    private RootNode<K, V> clear0() {
+        RootNode<K, V> previous = root;
+        
+        root = new RootNode<K, V>();
+        size = 0;
+        clearViews();
+        
+        return previous;
     }
     
     /**
