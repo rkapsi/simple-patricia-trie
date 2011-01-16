@@ -120,8 +120,10 @@ public class PatriciaIntTrie extends AbstractIntTrie implements Serializable {
                 return root.unsetKeyValue();
             }
             
-            RootNode previous = clear0();
-            traverse(previous, new Cursor() {
+            // We're traversing the old Trie and 
+            // adding elements to the new Trie!
+            RootNode old = clear0();
+            traverse(old, new Cursor() {
                 @Override
                 public boolean select(Entry e) {
                     if (entry != e) {

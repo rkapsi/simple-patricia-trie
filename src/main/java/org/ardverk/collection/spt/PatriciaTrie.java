@@ -170,8 +170,10 @@ public class PatriciaTrie<K, V> extends AbstractTrie<K, V> implements Serializab
                 return root.unsetKeyValue();
             }
             
-            RootNode<K, V> previous = clear0();
-            traverse(previous, new Cursor<K, V>() {
+            // We're traversing the old Trie and 
+            // adding elements to the new Trie!
+            RootNode<K, V> old = clear0();
+            traverse(old, new Cursor<K, V>() {
                 @Override
                 public boolean select(Entry<? extends K, ? extends V> e) {
                     if (entry != e) {
