@@ -22,9 +22,9 @@ public class PatriciaIntTrie extends AbstractIntTrie implements Serializable {
     
     private static final long serialVersionUID = 7464215084236615537L;
     
-    private final RootNode root = new RootNode();
+    private volatile RootNode root = new RootNode();
     
-    private int size = 0;
+    private volatile int size = 0;
     
     private transient volatile Entry[] entrySet = null;
     
@@ -120,37 +120,16 @@ public class PatriciaIntTrie extends AbstractIntTrie implements Serializable {
                 return root.unsetKeyValue();
             }
             
-            final Entry[] entries = new Entry[size()-1];
-            traverse(new Cursor() {
-                
-                private int index = 0;
-                
+            RootNode previous = clear0();
+            traverse(previous, new Cursor() {
                 @Override
                 public boolean select(Entry e) {
                     if (entry != e) {
-                        
-                        // We must make a copy of the root node
-                        // here or we'll lose the key-value with
-                        // the clear() operation!
-                        if (e == root) {
-                            int key = root.getKey();
-                            int value = root.getValue();
-                            e = new Node(key, value, -1);
-                        }
-                        
-                        entries[index++] = e;
+                        put(e.getKey(), e.getValue());
                     }
                     return true;
                 }
             });
-            
-            clear();
-            
-            Entry entryToAdd = null;
-            for (int i = 0; i < entries.length; i++) {
-                entryToAdd = entries[i];
-                put(entryToAdd.getKey(), entryToAdd.getValue());
-            }
             
             return entry.getValue();
         }
@@ -187,10 +166,14 @@ public class PatriciaIntTrie extends AbstractIntTrie implements Serializable {
     
     @Override
     public void traverse(Cursor cursor) {
-        traverseR(root.left, cursor, -1);
+        traverse(root, cursor);
     }
     
-    private boolean traverseR(Node h, Cursor cursor, int bitIndex) {
+    private static void traverse(RootNode root, Cursor cursor) {
+        traverseR(root, root.left, cursor, -1);
+    }
+    
+    private static boolean traverseR(RootNode root, Node h, Cursor cursor, int bitIndex) {
         
         if (h.bitIndex <= bitIndex) {
             if (h != root || !root.empty) {
@@ -199,18 +182,25 @@ public class PatriciaIntTrie extends AbstractIntTrie implements Serializable {
             return true;
         }
         
-        if (traverseR(h.left, cursor, h.bitIndex)) {
-            return traverseR(h.right, cursor, h.bitIndex);
+        if (traverseR(root, h.left, cursor, h.bitIndex)) {
+            return traverseR(root, h.right, cursor, h.bitIndex);
         }
         return false;
     }
     
     @Override
     public void clear() {
-        root.clear();
+        clear0();
+    }
+    
+    private RootNode clear0() {
+        RootNode previous = root;
         
+        root = new RootNode();
         size = 0;
         clearViews();
+        
+        return previous;
     }
     
     @Override
@@ -395,14 +385,6 @@ public class PatriciaIntTrie extends AbstractIntTrie implements Serializable {
             this.key = -1;
             this.empty = true;
             return setValue(-1);
-        }
-        
-        /**
-         * Clears the root node and effectively also the {@link IntTrie}.
-         */
-        public void clear() {
-            unsetKeyValue();
-            this.left = this;
         }
     }
     

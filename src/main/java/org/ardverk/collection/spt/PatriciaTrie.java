@@ -45,12 +45,12 @@ public class PatriciaTrie<K, V> extends AbstractTrie<K, V> implements Serializab
             return ((PatriciaKey<Object>)key).bitIndex(otherKey);
         }
     };
-    
-    private final RootNode<K, V> root = new RootNode<K, V>();
-    
+        
     private final KeyAnalyzer<? super K> keyAnalyzer;
     
-    private int size = 0;
+    private volatile RootNode<K, V> root = new RootNode<K, V>();
+    
+    private volatile int size = 0;
     
     private transient volatile Set<Entry<K, V>> entrySet = null;
     
@@ -170,40 +170,16 @@ public class PatriciaTrie<K, V> extends AbstractTrie<K, V> implements Serializab
                 return root.unsetKeyValue();
             }
             
-            @SuppressWarnings("unchecked")
-            final Map.Entry<? extends K, ? extends V>[] entries 
-                = new Map.Entry[size()-1];
-            
-            traverse(new Cursor<K, V>() {
-                
-                private int index = 0;
-                
+            RootNode<K, V> previous = clear0();
+            traverse(previous, new Cursor<K, V>() {
                 @Override
                 public boolean select(Entry<? extends K, ? extends V> e) {
                     if (entry != e) {
-                        
-                        // We must make a copy of the root node
-                        // here or we'll lose the key-value with
-                        // the clear() operation!
-                        if (e == root) {
-                            K key = root.getKey();
-                            V value = root.getValue();
-                            e = new Node<K, V>(key, value, -1);
-                        }
-                        
-                        entries[index++] = e;
+                        put(e.getKey(), e.getValue());
                     }
                     return true;
                 }
             });
-            
-            clear();
-            
-            Map.Entry<? extends K, ? extends V> entryToAdd = null;
-            for (int i = 0; i < entries.length; i++) {
-                entryToAdd = entries[i];
-                put(entryToAdd.getKey(), entryToAdd.getValue());
-            }
             
             return entry.getValue();
         }
@@ -241,10 +217,15 @@ public class PatriciaTrie<K, V> extends AbstractTrie<K, V> implements Serializab
     
     @Override
     public void traverse(Cursor<? super K, ? super V> cursor) {
-        traverseR(root.left, cursor, -1);
+        traverse(root, cursor);
     }
     
-    private boolean traverseR(Node<K, V> h, 
+    private static <K, V> void traverse(RootNode<K, V> root, 
+            Cursor<? super K, ? super V> cursor) {
+        traverseR(root, root.left, cursor, -1);
+    }
+    
+    private static <K, V> boolean traverseR(RootNode<K, V> root, Node<K, V> h, 
             Cursor<? super K, ? super V> cursor, int bitIndex) {
         
         if (h.bitIndex <= bitIndex) {
@@ -254,18 +235,25 @@ public class PatriciaTrie<K, V> extends AbstractTrie<K, V> implements Serializab
             return true;
         }
         
-        if (traverseR(h.left, cursor, h.bitIndex)) {
-            return traverseR(h.right, cursor, h.bitIndex);
+        if (traverseR(root, h.left, cursor, h.bitIndex)) {
+            return traverseR(root, h.right, cursor, h.bitIndex);
         }
         return false;
     }
     
     @Override
     public void clear() {
-        root.clear();
+        clear0();
+    }
+    
+    private RootNode<K, V> clear0() {
+        RootNode<K, V> previous = root;
         
+        root = new RootNode<K, V>();
         size = 0;
         clearViews();
+        
+        return previous;
     }
     
     @Override
@@ -448,14 +436,6 @@ public class PatriciaTrie<K, V> extends AbstractTrie<K, V> implements Serializab
             this.key = null;
             this.empty = true;
             return setValue(null);
-        }
-        
-        /**
-         * Clears the root node and effectively also the {@link Trie}.
-         */
-        public void clear() {
-            unsetKeyValue();
-            this.left = this;
         }
     }
     
