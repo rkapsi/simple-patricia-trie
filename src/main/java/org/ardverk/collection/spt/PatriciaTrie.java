@@ -86,9 +86,9 @@ public class PatriciaTrie<K, V> extends AbstractTrie<K, V> implements Serializab
     
     @Override
     public Entry<K, V> select(K key) {
-        Entry<K, V> node = selectR(root.left, key, -1);
-        if (node != root || !root.empty) {
-            return node;
+        Entry<K, V> entry = selectR(root.left, key, -1);
+        if (entry != root || !root.empty) {
+            return entry;
         }
         return null;
     }
@@ -112,12 +112,12 @@ public class PatriciaTrie<K, V> extends AbstractTrie<K, V> implements Serializab
             return putForNullKey(key, value);
         }
         
-        Entry<K, V> node = select(key);
+        Entry<K, V> entry = select(key);
         K existing = null;
-        if (node != null) {
-            existing = node.getKey();
+        if (entry != null) {
+            existing = entry.getKey();
             if (equals(key, existing)) {
-                return node.setValue(value);
+                return entry.setValue(value);
             }
         }
         
@@ -161,8 +161,8 @@ public class PatriciaTrie<K, V> extends AbstractTrie<K, V> implements Serializab
     @Override
     public V remove(Object key) {
         @SuppressWarnings("unchecked")
-        final Entry<K, V> entry = select((K)key);
-        if (entry != null && equals(key, entry.getKey())) {
+        final Entry<K, V> entry = entry((K)key);
+        if (entry != null) {
             
             // We can take a shortcut for the root Node!
             if (entry == root) {

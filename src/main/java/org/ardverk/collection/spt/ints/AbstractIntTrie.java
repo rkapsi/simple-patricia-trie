@@ -25,14 +25,22 @@ abstract class AbstractIntTrie implements IntTrie, Serializable {
     
     private static final long serialVersionUID = 7235114905641948930L;
 
+    /**
+     * Returns an {@link Entry} for the given key or {@code null} if no 
+     * such entry exists.
+     */
+    Entry entry(int key) {
+        Entry entry = select(key);
+        if (entry != null && equals(key, entry.getKey())) {
+            return entry;
+        }
+        return null;
+    }
+    
     @Override
     public int get(int key) {
-        Entry node = select(key);
-        if (node != null && equals(node.getKey(), key)) {
-            return node.getValue();            
-        }
-        
-        return -1;
+        Entry entry = entry(key);
+        return entry != null ? entry.getValue() : -1;
     }
     
     @Override
@@ -44,8 +52,7 @@ abstract class AbstractIntTrie implements IntTrie, Serializable {
     
     @Override
     public boolean containsKey(int key) {
-        Entry entry = select(key);
-        return entry != null && equals(key, entry.getKey());
+        return entry(key) != null;
     }
     
     @Override

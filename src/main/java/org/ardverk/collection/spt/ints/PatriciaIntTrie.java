@@ -41,9 +41,9 @@ public class PatriciaIntTrie extends AbstractIntTrie implements Serializable {
     
     @Override
     public Entry select(int key) {
-        Entry node = selectR(root.left, key, -1);
-        if (node != root || !root.empty) {
-            return node;
+        Entry entry = selectR(root.left, key, -1);
+        if (entry != root || !root.empty) {
+            return entry;
         }
         return null;
     }
@@ -67,12 +67,12 @@ public class PatriciaIntTrie extends AbstractIntTrie implements Serializable {
             return putForNullKey(key, value);
         }
         
-        Entry node = select(key);
+        Entry entry = select(key);
         int existing = -1;
-        if (node != null) {
-            existing = node.getKey();
+        if (entry != null) {
+            existing = entry.getKey();
             if (equals(key, existing)) {
-                return node.setValue(value);
+                return entry.setValue(value);
             }
         }
         
@@ -111,8 +111,8 @@ public class PatriciaIntTrie extends AbstractIntTrie implements Serializable {
     
     @Override
     public int remove(int key) {
-        final Entry entry = select(key);
-        if (entry != null && equals(key, entry.getKey())) {
+        final Entry entry = entry(key);
+        if (entry != null) {
             
             // We can take a shortcut for the root Node!
             if (entry == root) {

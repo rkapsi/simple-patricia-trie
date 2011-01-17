@@ -26,15 +26,23 @@ abstract class AbstractTrie<K, V> implements Trie<K, V>, Serializable {
     
     private static final long serialVersionUID = 7235114905641948930L;
 
+    /**
+     * Returns an {@link Entry} for the given key or {@code null} if no 
+     * such entry exists.
+     */
+    Entry<K, V> entry(K key) {
+        Entry<K, V> entry = select(key);
+        if (entry != null && equals(key, entry.getKey())) {
+            return entry;
+        }
+        return null;
+    }
+    
     @Override
     public V get(Object key) {
         @SuppressWarnings("unchecked")
-        Entry<K, V> node = select((K)key);
-        if (node != null && equals(node.getKey(), key)) {
-            return node.getValue();            
-        }
-        
-        return null;
+        Entry<K, V> entry = entry((K)key);
+        return entry != null ? entry.getValue() : null;
     }
     
     @Override
@@ -44,11 +52,10 @@ abstract class AbstractTrie<K, V> implements Trie<K, V>, Serializable {
         }
     }
     
+    @SuppressWarnings("unchecked")
     @Override
     public boolean containsKey(Object key) {
-        @SuppressWarnings("unchecked")
-        Entry<K, V> entry = select((K)key);
-        return entry != null && equals(key, entry.getKey());
+        return entry((K)key) != null;
     }
     
     @Override
