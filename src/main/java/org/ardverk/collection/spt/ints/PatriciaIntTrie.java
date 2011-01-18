@@ -119,32 +119,30 @@ public class PatriciaIntTrie extends AbstractIntTrie implements Serializable {
     
     @Override
     public int remove(int key) {
-        final Entry entry = entry(key);
+        Entry entry = entry(key);
         if (entry != null) {
-            
-            // We can take a shortcut for the root Node!
-            if (entry == root) {
-                decrementSize();
-                return root.unsetKeyValue();
-            }
-            
-            // We're traversing the old Trie and 
-            // adding elements to the new Trie!
-            RootNode old = clear0();
-            traverse(old, new Cursor() {
-                @Override
-                public boolean select(Entry e) {
-                    if (entry != e) {
-                        put(e.getKey(), e.getValue());
-                    }
-                    return true;
-                }
-            });
-            
-            return entry.getValue();
+            removeEntry(entry);
         }
         
         return -1;
+    }
+    
+    /**
+     * Removes the given {@link Entry} from the {@link PatriciaIntTrie}.
+     */
+    private int removeEntry(final Entry entry) {
+        RootNode old = clear0();
+        traverse(old, new Cursor() {
+            @Override
+            public boolean select(Entry e) {
+                if (!entry.equals(e)) {
+                    put(e.getKey(), e.getValue());
+                }
+                return true;
+            }
+        });
+        
+        return entry.getValue();
     }
     
     @Override
@@ -272,7 +270,6 @@ public class PatriciaIntTrie extends AbstractIntTrie implements Serializable {
         return values;
     }
     
-    
     @Override
     public Entry firstEntry() {
         Entry entry = followLeft(root.left, -1, root);
@@ -315,14 +312,6 @@ public class PatriciaIntTrie extends AbstractIntTrie implements Serializable {
      */
     private void incrementSize() {
         ++size;
-        clearViews();
-    }
-    
-    /**
-     * Decrements the {@link #size} counter and calls {@link #clearViews()}.
-     */
-    private void decrementSize() {
-        --size;
         clearViews();
     }
     
@@ -389,15 +378,6 @@ public class PatriciaIntTrie extends AbstractIntTrie implements Serializable {
             this.empty = false;
             return setValue(value);
         }
-        
-        /**
-         * Unsets the key and value of the root node.
-         */
-        public int unsetKeyValue() {
-            this.key = -1;
-            this.empty = true;
-            return setValue(-1);
-        }
     }
     
     /**
@@ -438,6 +418,24 @@ public class PatriciaIntTrie extends AbstractIntTrie implements Serializable {
             int existing = this.value;
             this.value = value;
             return existing;
+        }
+        
+        @Override
+        public int hashCode() {
+            return 31*key + value;
+        }
+        
+        @Override
+        public boolean equals(Object o) {
+            if (o == this) {
+                return true;
+            } else if (!(o instanceof Entry)) {
+                return false;
+            }
+            
+            Entry other = (Entry)o;
+            return key == other.getKey()
+                && value == other.getValue();
         }
         
         @Override
