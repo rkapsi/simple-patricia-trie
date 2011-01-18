@@ -12,7 +12,7 @@ This is an (almost 1:1) implementation of the PATRICIA Trie as described in Robe
 
 This is a general purpose implementation of the PATRICIA Trie. It implements the `Map` interface and a few methods were borrowed from `SortedMap` and `NavigableMap` such as `firstEntry()` or `lastKey()` but no attempts were (and will be) made to implement all `SortedMap` and `NavigableMap` features.
 
-Some operations ain't heavily optimized to keep the implementation simple, lightweight and easy to extend. The various `remove()` operations run in _O(n)_ time (i.e. the entire Trie gets rebuild) and everything that utilizes an `Iterator` will pre-iterate the Trie.
+Some operations ain't heavily optimized to keep the implementation simple, lightweight and easy to extend. The various `remove()` operations run in _O(n)_ time (i.e. the entire Trie gets rebuild) and everything that utilizes an `Iterator` will pre-iterate the Trie. Both operations would require us to keep track of each `Node`'s parent and predecessor `Node`s.
 
 ## org.ardverk.collection.spt.ints
 
