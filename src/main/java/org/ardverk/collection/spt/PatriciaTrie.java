@@ -17,17 +17,16 @@
 package org.ardverk.collection.spt;
 
 import java.io.Serializable;
-import java.util.ArrayList;
+import java.util.AbstractCollection;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.ConcurrentModificationException;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Set;
 
 /**
  * A simple/lightweight implementation of a PATRICIA {@link Trie}.
- * Some operations such as {@link #remove(Object)}, {@link #entrySet()},
- * {@link #keySet()} and {@link #values()} run in O(n) time.
  */
 public class PatriciaTrie<K, V> extends AbstractTrie<K, V> implements Serializable {
     
@@ -52,11 +51,15 @@ public class PatriciaTrie<K, V> extends AbstractTrie<K, V> implements Serializab
     
     private volatile int size = 0;
     
-    private transient volatile Set<Entry<K, V>> entrySet = null;
+    private transient volatile Entry<? extends K, ? extends V>[] entries = null;
     
-    private transient volatile Set<K> keySet = null;
+    private transient volatile EntrySet entrySet = null;
     
-    private transient volatile Collection<V> values = null;
+    private transient volatile KeySet keySet = null;
+    
+    private transient volatile Values values = null;
+    
+    private transient volatile int modCount = 0;
     
     public PatriciaTrie() {
         this(DEFAULT);
@@ -133,6 +136,9 @@ public class PatriciaTrie<K, V> extends AbstractTrie<K, V> implements Serializab
         return null;
     }
     
+    /**
+     * Stores the given key-value at the {@link RootNode}.
+     */
     private V putForNullKey(K key, V value) {
         if (root.empty) {
             incrementSize();
@@ -162,32 +168,31 @@ public class PatriciaTrie<K, V> extends AbstractTrie<K, V> implements Serializab
     @Override
     public V remove(Object key) {
         @SuppressWarnings("unchecked")
-        final Entry<K, V> entry = entry((K)key);
+        Entry<K, V> entry = entry((K)key);
         if (entry != null) {
-            
-            // We can take a shortcut for the root Node!
-            if (entry == root) {
-                decrementSize();
-                return root.unsetKeyValue();
-            }
-            
-            // We're traversing the old Trie and 
-            // adding elements to the new Trie!
-            RootNode<K, V> old = clear0();
-            traverse(old, new Cursor<K, V>() {
-                @Override
-                public boolean select(Entry<? extends K, ? extends V> e) {
-                    if (entry != e) {
-                        put(e.getKey(), e.getValue());
-                    }
-                    return true;
-                }
-            });
-            
-            return entry.getValue();
+            return removeEntry(entry);
         }
         
         return null;
+    }
+    
+    /**
+     * Removes the given {@link Entry} from the Trie.
+     */
+    private V removeEntry(final Entry<? extends K, ? extends V> entry) {
+        // We're traversing the old Trie and adding elements to the new Trie!
+        RootNode<K, V> old = clear0();
+        traverse(old, new Cursor<K, V>() {
+            @Override
+            public boolean select(Entry<? extends K, ? extends V> e) {
+                if (!entry.equals(e)) {
+                    put(e.getKey(), e.getValue());
+                }
+                return true;
+            }
+        });
+        
+        return entry.getValue();
     }
     
     @Override
@@ -257,19 +262,7 @@ public class PatriciaTrie<K, V> extends AbstractTrie<K, V> implements Serializab
     @Override
     public Set<Entry<K, V>> entrySet() {
         if (entrySet == null) {
-            final Set<Entry<K, V>> entries 
-                = new ArrayListSet<Entry<K, V>>(size());
-            
-            traverse(new Cursor<K, V>() {
-                @SuppressWarnings("unchecked")
-                @Override
-                public boolean select(Entry<? extends K, ? extends V> entry) {
-                    entries.add((Entry<K, V>)entry);
-                    return true;
-                }
-            });
-            
-            entrySet = Collections.unmodifiableSet(entries);
+            entrySet = new EntrySet();
         }
         return entrySet;
     }
@@ -277,17 +270,7 @@ public class PatriciaTrie<K, V> extends AbstractTrie<K, V> implements Serializab
     @Override
     public Set<K> keySet() {
         if (keySet == null) {
-            final Set<K> entries = new ArrayListSet<K>(size());
-            
-            traverse(new Cursor<K, V>() {
-                @Override
-                public boolean select(Entry<? extends K, ? extends V> entry) {
-                    entries.add(entry.getKey());
-                    return true;
-                }
-            });
-            
-            keySet = Collections.unmodifiableSet(entries);
+            keySet = new KeySet();
         }
         return keySet;
     }
@@ -295,17 +278,7 @@ public class PatriciaTrie<K, V> extends AbstractTrie<K, V> implements Serializab
     @Override
     public Collection<V> values() {
         if (values == null) {
-            final List<V> entries = new ArrayList<V>(size());
-            
-            traverse(new Cursor<K, V>() {
-                @Override
-                public boolean select(Entry<? extends K, ? extends V> entry) {
-                    entries.add(entry.getValue());
-                    return true;
-                }
-            });
-            
-            values = Collections.unmodifiableCollection(entries);
+            values = new Values();
         }
         return values;
     }
@@ -348,19 +321,11 @@ public class PatriciaTrie<K, V> extends AbstractTrie<K, V> implements Serializab
     }
 
     /**
-     * Increments the {@link #size} counter and calls {@link #clearViews()}.
+     * Increments the {@link #size} counter and calls {@link #clearEntriesArray()}.
      */
     private void incrementSize() {
         ++size;
-        clearViews();
-    }
-    
-    /**
-     * Decrements the {@link #size} counter and calls {@link #clearViews()}.
-     */
-    private void decrementSize() {
-        --size;
-        clearViews();
+        clearEntriesArray();
     }
     
     /**
@@ -375,19 +340,17 @@ public class PatriciaTrie<K, V> extends AbstractTrie<K, V> implements Serializab
         
         root = new RootNode<K, V>();
         size = 0;
-        clearViews();
+        clearEntriesArray();
         
         return previous;
     }
     
     /**
-     * Clears the various views as returned by {@link #entrySet()}, 
-     * {@link #keySet()} and {@link #values()}.
+     * Clears the {@link #entries} array.
      */
-    private void clearViews() {
-        entrySet = null;
-        keySet = null;
-        values = null;
+    private void clearEntriesArray() {
+        entries = null;
+        ++modCount;
     }
     
     /**
@@ -405,6 +368,35 @@ public class PatriciaTrie<K, V> extends AbstractTrie<K, V> implements Serializab
     }
     
     /**
+     * Turns the {@link PatriciaTrie} into an {@link Entry[]}. The array
+     * is being cached for as long as the {@link PatriciaTrie} isn't being
+     * modified.
+     * 
+     * @see ViewIterator
+     */
+    private Entry<? extends K, ? extends V>[] toArray() {
+        if (entries == null) {
+            @SuppressWarnings("unchecked")
+            final Entry<? extends K, ? extends V>[] dst 
+                = new Entry[size()];
+            
+            traverse(new Cursor<K, V>() {
+                
+                private int index = 0;
+                
+                @Override
+                public boolean select(Entry<? extends K, ? extends V> entry) {
+                    dst[index++] = entry;
+                    return true;
+                }
+            });
+            
+            entries = dst;
+        }
+        return entries;
+    }
+    
+    /**
      * Returns a {@link KeyAnalyzer} for the given {@link Map}.
      */
     @SuppressWarnings({ "unchecked", "rawtypes" })
@@ -414,6 +406,182 @@ public class PatriciaTrie<K, V> extends AbstractTrie<K, V> implements Serializab
         }
         
         return DEFAULT;
+    }
+    
+    /**
+     * An {@link Iterator} for {@link Entry}s.
+     * 
+     * @see PatriciaTrie#toArray()
+     */
+    private abstract class ViewIterator<E> implements Iterator<E> {
+                
+        private final Entry<? extends K, ? extends V>[] entries = toArray();
+        
+        private int expectedModCount = PatriciaTrie.this.modCount;
+        
+        private int index = 0;
+        
+        private Entry<? extends K, ? extends V> current = null;
+        
+        @Override
+        public boolean hasNext() {
+            return index < entries.length;
+        }
+
+        @Override
+        public E next() {
+            if (!hasNext()) {
+                throw new NoSuchElementException();
+            }
+            
+            if (expectedModCount != PatriciaTrie.this.modCount) {
+                throw new ConcurrentModificationException();
+            }
+            
+            current = entries[index++];
+            return next(current);
+        }
+
+        /**
+         * Called for each {@link Entry}.
+         * 
+         * @see #next()
+         */
+        protected abstract E next(Entry<? extends K, ? extends V> entry);
+        
+        @Override
+        public void remove() {
+            if (current == null) {
+                throw new IllegalStateException();
+            }
+            
+            removeEntry(current);
+            expectedModCount = PatriciaTrie.this.modCount;
+            current = null;
+        }
+    }
+    
+    /**
+     * An abstract base class for the various views.
+     */
+    private abstract class AbstractView<E> extends AbstractCollection<E> {
+
+        @Override
+        public void clear() {
+            PatriciaTrie.this.clear();
+        }
+        
+        @Override
+        public int size() {
+            return PatriciaTrie.this.size();
+        }
+    }
+    
+    /**
+     * @see PatriciaTrie#entrySet()
+     */
+    private class EntrySet extends AbstractView<Entry<K, V>> implements Set<Entry<K, V>> {
+        
+        private Entry<K, V> entry(Entry<K, V> entry) {
+            Entry<K, V> other = PatriciaTrie.this.entry(entry.getKey());
+            
+            if (other != null && other.equals(entry)) {
+                return other;
+            }
+            
+            return null;
+        }
+        
+        @SuppressWarnings("unchecked")
+        @Override
+        public boolean contains(Object o) {
+            if (o instanceof Entry<?, ?>) {
+                return entry((Entry<K, V>)o) != null;
+            }
+            return false;
+        }
+
+        @Override
+        public boolean remove(Object o) {
+            if (o instanceof Entry<?, ?>) {
+                @SuppressWarnings("unchecked")
+                Entry<K, V> entry = entry((Entry<K, V>)o);
+                if (entry != null) {
+                    int size = size();
+                    PatriciaTrie.this.removeEntry(entry);
+                    return size != size();
+                }
+            }
+            return false;
+        }
+
+        @Override
+        public Iterator<Entry<K, V>> iterator() {
+            return new ViewIterator<Entry<K, V>>() {
+                @SuppressWarnings("unchecked")
+                @Override
+                protected Entry<K, V> next(Entry<? extends K, ? extends V> entry) {
+                    return (Entry<K, V>)entry;
+                }
+            };
+        }
+    }
+    
+    /**
+     * @see PatriciaTrie#keySet()
+     */
+    private class KeySet extends AbstractView<K> implements Set<K> {
+        
+        @Override
+        public boolean remove(Object key) {
+            int size = size();
+            PatriciaTrie.this.remove(key);
+            return size != size();
+        }
+        
+        @Override
+        public boolean contains(Object o) {
+            return PatriciaTrie.this.containsKey(o);
+        }
+        
+        @Override
+        public Iterator<K> iterator() {
+            return new ViewIterator<K>() {
+                @Override
+                protected K next(Entry<? extends K, ? extends V> entry) {
+                    return entry.getKey();
+                }
+            };
+        }
+    }
+    
+    /**
+     * @see PatriciaTrie#values()
+     */
+    private class Values extends AbstractView<V> {
+        
+        @Override
+        public boolean remove(Object value) {
+            for (Entry<K, V> entry : entrySet()) {
+                if (AbstractTrie.equals(value, entry.getValue())) {
+                    int size = size();
+                    PatriciaTrie.this.removeEntry(entry);
+                    return size != size();
+                }
+            }
+            
+            return false;
+        }
+        
+        @Override
+        public Iterator<V> iterator() {
+            return new ViewIterator<V>() {
+                @Override
+                protected V next(Entry<? extends K, ? extends V> entry) {
+                    return entry.getValue();
+                }
+            };
+        }
     }
     
     /**
@@ -437,15 +605,6 @@ public class PatriciaTrie<K, V> extends AbstractTrie<K, V> implements Serializab
             this.key = key;
             this.empty = false;
             return setValue(value);
-        }
-        
-        /**
-         * Unsets the key and value of the root node.
-         */
-        public V unsetKeyValue() {
-            this.key = null;
-            this.empty = true;
-            return setValue(null);
         }
     }
     
@@ -490,20 +649,27 @@ public class PatriciaTrie<K, V> extends AbstractTrie<K, V> implements Serializab
         }
         
         @Override
+        public int hashCode() {
+            return 31 * (key != null ? key.hashCode() : 0)
+                    + (value != null ? value.hashCode() : 0);
+        }
+        
+        @Override
+        public boolean equals(Object o) {
+            if (o == this) {
+                return true;
+            } else if (!(o instanceof Entry<?, ?>)) {
+                return false;
+            }
+            
+            Entry<?, ?> other = (Entry<?, ?>)o;
+            return AbstractTrie.equals(key, other.getKey())
+                && AbstractTrie.equals(value, other.getValue());
+        }
+        
+        @Override
         public String toString() {
             return key + " (" + bitIndex + ") -> " + value;
-        }
-    }
-    
-    /**
-     * An {@link ArrayList} that implements the {@link Set} interface.
-     */
-    private static class ArrayListSet<K> extends ArrayList<K> implements Set<K> {
-        
-        private static final long serialVersionUID = -1036159554753667259L;
-
-        public ArrayListSet(int initialCapacity) {
-            super(initialCapacity);
         }
     }
 }
