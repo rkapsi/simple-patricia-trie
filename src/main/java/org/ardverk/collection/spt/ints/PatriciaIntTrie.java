@@ -44,8 +44,8 @@ public class PatriciaIntTrie extends AbstractIntTrie implements Serializable {
     
     @Override
     public Entry select(int key) {
-        Entry entry = selectR(root.left, key, -1);
-        if (entry != root || !root.empty) {
+        Node entry = selectR(root.left, key, -1);
+        if (!entry.isEmpty()) {
             return entry;
         }
         return null;
@@ -92,7 +92,7 @@ public class PatriciaIntTrie extends AbstractIntTrie implements Serializable {
     }
     
     private int putForNullKey(int key, int value) {
-        if (root.empty) {
+        if (root.isEmpty()) {
             incrementSize();
         }
         
@@ -131,8 +131,9 @@ public class PatriciaIntTrie extends AbstractIntTrie implements Serializable {
      * Removes the given {@link Entry} from the {@link PatriciaIntTrie}.
      */
     private int removeEntry(final Entry entry) {
+        // We're traversing the old Trie and adding elements to the new Trie!
         RootNode old = clear0();
-        traverse(old, new Cursor() {
+        traverseR(old.left, new Cursor() {
             @Override
             public boolean select(Entry e) {
                 if (!entry.equals(e)) {
@@ -140,7 +141,7 @@ public class PatriciaIntTrie extends AbstractIntTrie implements Serializable {
                 }
                 return true;
             }
-        });
+        }, -1);
         
         return entry.getValue();
     }
@@ -153,7 +154,7 @@ public class PatriciaIntTrie extends AbstractIntTrie implements Serializable {
     private boolean selectR(Node h, int key, Cursor cursor, int bitIndex) {
         
         if (h.bitIndex <= bitIndex) {
-            if (h != root || !root.empty) {
+            if (!h.isEmpty()) {
                 return cursor.select(h); 
             }
             return true;
@@ -174,24 +175,20 @@ public class PatriciaIntTrie extends AbstractIntTrie implements Serializable {
     
     @Override
     public void traverse(Cursor cursor) {
-        traverse(root, cursor);
+        traverseR(root.left, cursor, -1);
     }
     
-    private static void traverse(RootNode root, Cursor cursor) {
-        traverseR(root, root.left, cursor, -1);
-    }
-    
-    private static boolean traverseR(RootNode root, Node h, Cursor cursor, int bitIndex) {
+    private static boolean traverseR(Node h, Cursor cursor, int bitIndex) {
         
         if (h.bitIndex <= bitIndex) {
-            if (h != root || !root.empty) {
+            if (!h.isEmpty()) {
                 return cursor.select(h); 
             }
             return true;
         }
         
-        if (traverseR(root, h.left, cursor, h.bitIndex)) {
-            return traverseR(root, h.right, cursor, h.bitIndex);
+        if (traverseR(h.left, cursor, h.bitIndex)) {
+            return traverseR(h.right, cursor, h.bitIndex);
         }
         return false;
     }
@@ -272,8 +269,8 @@ public class PatriciaIntTrie extends AbstractIntTrie implements Serializable {
     
     @Override
     public Entry firstEntry() {
-        Entry entry = followLeft(root.left, -1, root);
-        if (entry != root || !root.empty) {
+        Node entry = followLeft(root.left, -1, root);
+        if (!entry.isEmpty()) {
             return entry;
         }
         return null;
@@ -281,16 +278,16 @@ public class PatriciaIntTrie extends AbstractIntTrie implements Serializable {
 
     @Override
     public Entry lastEntry() {
-        Entry entry = followRight(root.left, -1);
-        if (entry != root || !root.empty) {
+        Node entry = followRight(root.left, -1);
+        if (!entry.isEmpty()) {
             return entry;
         }
         return null;
     }
     
-    private Entry followLeft(Node h, int bitIndex, Node p) {
+    private Node followLeft(Node h, int bitIndex, Node p) {
         if (h.bitIndex <= bitIndex) {
-            if (h != root || !root.empty) {
+            if (!h.isEmpty()) {
                 return h;
             }
             return p;
@@ -299,7 +296,7 @@ public class PatriciaIntTrie extends AbstractIntTrie implements Serializable {
         return followLeft(h.left, h.bitIndex, h);
     }
     
-    private Entry followRight(Node h, int bitIndex) {
+    private Node followRight(Node h, int bitIndex) {
         if (h.bitIndex <= bitIndex) {
             return h;
         }
@@ -378,6 +375,11 @@ public class PatriciaIntTrie extends AbstractIntTrie implements Serializable {
             this.empty = false;
             return setValue(value);
         }
+
+        @Override
+        public boolean isEmpty() {
+            return empty;
+        }
     }
     
     /**
@@ -403,6 +405,13 @@ public class PatriciaIntTrie extends AbstractIntTrie implements Serializable {
             this.value = value;
         }
 
+        /**
+         * Returns {@code true} if the {@link Node} has no key-value.
+         */
+        public boolean isEmpty() {
+            return false;
+        }
+        
         @Override
         public int getKey() {
             return key;

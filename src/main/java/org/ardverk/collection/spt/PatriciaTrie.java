@@ -89,8 +89,8 @@ public class PatriciaTrie<K, V> extends AbstractTrie<K, V> implements Serializab
     
     @Override
     public Entry<K, V> select(K key) {
-        Entry<K, V> entry = selectR(root.left, key, -1);
-        if (entry != root || !root.empty) {
+        Node<K, V> entry = selectR(root.left, key, -1);
+        if (!entry.isEmpty()) {
             return entry;
         }
         return null;
@@ -140,7 +140,7 @@ public class PatriciaTrie<K, V> extends AbstractTrie<K, V> implements Serializab
      * Stores the given key-value at the {@link RootNode}.
      */
     private V putForNullKey(K key, V value) {
-        if (root.empty) {
+        if (root.isEmpty()) {
             incrementSize();
         }
         
@@ -182,7 +182,7 @@ public class PatriciaTrie<K, V> extends AbstractTrie<K, V> implements Serializab
     private V removeEntry(final Entry<? extends K, ? extends V> entry) {
         // We're traversing the old Trie and adding elements to the new Trie!
         RootNode<K, V> old = clear0();
-        traverse(old, new Cursor<K, V>() {
+        traverseR(old.left, new Cursor<K, V>() {
             @Override
             public boolean select(Entry<? extends K, ? extends V> e) {
                 if (!entry.equals(e)) {
@@ -190,7 +190,7 @@ public class PatriciaTrie<K, V> extends AbstractTrie<K, V> implements Serializab
                 }
                 return true;
             }
-        });
+        }, -1);
         
         return entry.getValue();
     }
@@ -204,8 +204,8 @@ public class PatriciaTrie<K, V> extends AbstractTrie<K, V> implements Serializab
             Cursor<? super K, ? super V> cursor, int bitIndex) {
         
         if (h.bitIndex <= bitIndex) {
-            if (h != root || !root.empty) {
-                return cursor.select(h); 
+            if (!h.isEmpty()) {
+                return cursor.select(h);
             }
             return true;
         }
@@ -225,26 +225,21 @@ public class PatriciaTrie<K, V> extends AbstractTrie<K, V> implements Serializab
     
     @Override
     public void traverse(Cursor<? super K, ? super V> cursor) {
-        traverse(root, cursor);
+        traverseR(root.left, cursor, -1);
     }
     
-    private static <K, V> void traverse(RootNode<K, V> root, 
-            Cursor<? super K, ? super V> cursor) {
-        traverseR(root, root.left, cursor, -1);
-    }
-    
-    private static <K, V> boolean traverseR(RootNode<K, V> root, Node<K, V> h, 
+    private static <K, V> boolean traverseR(Node<K, V> h, 
             Cursor<? super K, ? super V> cursor, int bitIndex) {
         
         if (h.bitIndex <= bitIndex) {
-            if (h != root || !root.empty) {
-                return cursor.select(h); 
+            if (!h.isEmpty()) {
+                return cursor.select(h);
             }
             return true;
         }
         
-        if (traverseR(root, h.left, cursor, h.bitIndex)) {
-            return traverseR(root, h.right, cursor, h.bitIndex);
+        if (traverseR(h.left, cursor, h.bitIndex)) {
+            return traverseR(h.right, cursor, h.bitIndex);
         }
         return false;
     }
@@ -285,8 +280,8 @@ public class PatriciaTrie<K, V> extends AbstractTrie<K, V> implements Serializab
     
     @Override
     public Entry<K, V> firstEntry() {
-        Entry<K, V> entry = followLeft(root.left, -1, root);
-        if (entry != root || !root.empty) {
+        Node<K, V> entry = followLeft(root.left, -1, root);
+        if (!entry.isEmpty()) {
             return entry;
         }
         return null;
@@ -294,16 +289,16 @@ public class PatriciaTrie<K, V> extends AbstractTrie<K, V> implements Serializab
 
     @Override
     public Entry<K, V> lastEntry() {
-        Entry<K, V> entry = followRight(root.left, -1);
-        if (entry != root || !root.empty) {
+        Node<K, V> entry = followRight(root.left, -1);
+        if (!entry.isEmpty()) {
             return entry;
         }
         return null;
     }
     
-    private Entry<K, V> followLeft(Node<K, V> h, int bitIndex, Node<K, V> p) {
+    private Node<K, V> followLeft(Node<K, V> h, int bitIndex, Node<K, V> p) {
         if (h.bitIndex <= bitIndex) {
-            if (h != root || !root.empty) {
+            if (!h.isEmpty()) {
                 return h;
             }
             return p;
@@ -312,7 +307,7 @@ public class PatriciaTrie<K, V> extends AbstractTrie<K, V> implements Serializab
         return followLeft(h.left, h.bitIndex, h);
     }
     
-    private Entry<K, V> followRight(Node<K, V> h, int bitIndex) {
+    private Node<K, V> followRight(Node<K, V> h, int bitIndex) {
         if (h.bitIndex <= bitIndex) {
             return h;
         }
@@ -606,6 +601,11 @@ public class PatriciaTrie<K, V> extends AbstractTrie<K, V> implements Serializab
             this.empty = false;
             return setValue(value);
         }
+
+        @Override
+        public boolean isEmpty() {
+            return empty;
+        }
     }
     
     /**
@@ -631,6 +631,13 @@ public class PatriciaTrie<K, V> extends AbstractTrie<K, V> implements Serializab
             this.value = value;
         }
 
+        /**
+         * Returns {@code true} if the {@link Node} has no key-value.
+         */
+        public boolean isEmpty() {
+            return false;
+        }
+        
         @Override
         public K getKey() {
             return key;
