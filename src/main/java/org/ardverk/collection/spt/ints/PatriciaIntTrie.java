@@ -121,7 +121,7 @@ public class PatriciaIntTrie extends AbstractIntTrie implements Serializable {
     public int remove(int key) {
         Entry entry = entry(key);
         if (entry != null) {
-            removeEntry(entry);
+            return removeEntry(entry);
         }
         
         return -1;
