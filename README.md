@@ -18,6 +18,6 @@ Some operations ain't heavily optimized to keep the implementation simple, light
 
 This is an example how to change the PATRICIA Trie from a data structure that stores `Object` -> `Object` pairs to a data structure that stores `int` -> `int` pairs. It cuts away a lot of the slack that is necessary if you're dealing with `Object`s.
 
-***
+* * *
 
 Use these three PATRICIA Tries as a starting point for your own customized PATRICIA Trie implementations.
