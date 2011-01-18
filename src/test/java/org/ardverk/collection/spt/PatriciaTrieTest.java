@@ -77,4 +77,18 @@ public class PatriciaTrieTest {
         TestCase.assertEquals("3", trie.get("3"));
         TestCase.assertEquals("null-key", trie.get(null));
     }
+    
+    @Test
+    public void replace() {
+        PatriciaTrie<String, String> trie 
+            = new PatriciaTrie<String, String>(
+                CharSequenceKeyAnalyzer.INSTANCE);
+        
+        trie.put("1", "1");
+        trie.put("2", "2");
+        trie.put("3", "3");
+        
+        trie.put("2", "new-value");
+        TestCase.assertEquals("new-value", trie.get("2"));
+    }
 }

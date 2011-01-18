@@ -18,6 +18,9 @@ package org.ardverk.collection.spt.ints;
 
 import java.io.Serializable;
 
+import org.ardverk.collection.spt.IntegerKeyAnalyzer;
+import org.ardverk.collection.spt.KeyAnalyzer;
+
 public class PatriciaIntTrie extends AbstractIntTrie implements Serializable {
     
     private static final long serialVersionUID = 7464215084236615537L;
@@ -68,7 +71,7 @@ public class PatriciaIntTrie extends AbstractIntTrie implements Serializable {
         }
         
         Entry entry = select(key);
-        int existing = -1;
+        int existing = 0;
         if (entry != null) {
             existing = entry.getKey();
             if (equals(key, existing)) {
@@ -77,6 +80,11 @@ public class PatriciaIntTrie extends AbstractIntTrie implements Serializable {
         }
         
         int bitIndex = bitIndex(key, existing);
+        if (bitIndex == KeyAnalyzer.NULL_KEY) {
+            return putForNullKey(key, value);
+        }
+        
+        assert (bitIndex >= 0);
         root.left = putR(root.left, key, value, bitIndex, root);
         incrementSize();
         
@@ -345,23 +353,18 @@ public class PatriciaIntTrie extends AbstractIntTrie implements Serializable {
         values = null;
     }
     
-    private static final int MSB = 1 << Integer.SIZE-1;
-    
+    /**
+     * @see IntegerKeyAnalyzer#isSet(int, int)
+     */
     private static boolean isSet(int key, int bitIndex) {
-        int mask = MSB >>> bitIndex;
-        return (key & mask) != 0;
+        return IntegerKeyAnalyzer.INSTANCE.isSet(key, bitIndex);
     }
     
+    /**
+     * @see IntegerKeyAnalyzer#bitIndex(int, int)
+     */
     private static int bitIndex(int key, int otherKey) {
-        int xorValue = key ^ otherKey;
-        for (int i = 0; i < Integer.SIZE; i++) {
-            int mask = MSB >>> i;
-            if ((xorValue & mask) != 0) {
-                return i;
-            }
-        }
-        
-        throw new IllegalStateException(key + ", " + otherKey);
+        return IntegerKeyAnalyzer.INSTANCE.bitIndex(key, otherKey);
     }
     
     /**

@@ -126,6 +126,7 @@ public class PatriciaTrie<K, V> extends AbstractTrie<K, V> implements Serializab
             return putForNullKey(key, value);
         }
         
+        assert (bitIndex >= 0);
         root.left = putR(root.left, key, value, bitIndex, root);
         incrementSize();
         

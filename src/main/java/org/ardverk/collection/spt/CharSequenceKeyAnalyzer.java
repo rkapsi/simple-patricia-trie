@@ -76,6 +76,6 @@ public class CharSequenceKeyAnalyzer implements KeyAnalyzer<CharSequence> {
             return NULL_KEY;
         }
         
-        throw new IllegalStateException();
+        return EQUAL_KEY;
     }
 }

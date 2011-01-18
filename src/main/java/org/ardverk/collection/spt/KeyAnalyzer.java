@@ -28,6 +28,12 @@ public interface KeyAnalyzer<K> {
     public static final int NULL_KEY = -1;
     
     /**
+     * Returned by {@link #bitIndex(Object, Object)} if both arguments
+     * were equal.
+     */
+    public static final int EQUAL_KEY = -2;
+    
+    /**
      * Returns {@code true} if the key's bit at the given bit index is set.
      */
     public boolean isSet(K key, int bitIndex);
