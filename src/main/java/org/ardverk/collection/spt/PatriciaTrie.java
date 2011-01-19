@@ -38,10 +38,10 @@ public class PatriciaTrie<K, V> extends AbstractTrie<K, V> implements Serializab
             return ((PatriciaKey<?>)key).isBitSet(bitIndex);
         }
         
-        @SuppressWarnings("unchecked")
+        @SuppressWarnings({ "rawtypes", "unchecked" })
         @Override
         public int bitIndex(Object key, Object otherKey) {
-            return ((PatriciaKey<Object>)key).bitIndex(otherKey);
+            return ((PatriciaKey)key).bitIndex(otherKey);
         }
     };
         
