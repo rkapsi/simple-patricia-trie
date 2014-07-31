@@ -62,15 +62,12 @@ abstract class AbstractTrie<K, V> implements Trie<K, V>, Serializable {
   public boolean containsValue(final Object value) {
     final boolean[] contains = { false };
     
-    traverse(new Cursor<K, V>() {
-      @Override
-      public boolean select(Entry<? extends K, ? extends V> entry) {
-        if (AbstractTrie.equals(value, entry.getValue())) {
-          contains[0] = true;
-          return false;
-        }
-        return true;
+    traverse((entry) -> {
+      if (AbstractTrie.equals(value, entry.getValue())) {
+        contains[0] = true;
+        return false;
       }
+      return true;
     });
     
     return contains[0];
@@ -128,12 +125,9 @@ abstract class AbstractTrie<K, V> implements Trie<K, V>, Serializable {
     final StringBuilder buffer = new StringBuilder();
     buffer.append(getClass().getSimpleName()).append("[").append(size()).append("]={\n");
     
-    traverse(new Cursor<K, V>() {
-      @Override
-      public boolean select(Map.Entry<? extends K, ? extends V> entry) {
-        buffer.append("  ").append(entry).append("\n");
-        return true;
-      }
+    traverse((entry) -> {
+      buffer.append("  ").append(entry).append("\n");
+      return true;
     });
     
     buffer.append("}\n");

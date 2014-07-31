@@ -23,6 +23,7 @@ import java.util.Map.Entry;
  * A {@link Cursor} is a callback interface for the {@link Trie}
  * interface.
  */
+@FunctionalInterface
 public interface Cursor<K, V> {
   
   /**
