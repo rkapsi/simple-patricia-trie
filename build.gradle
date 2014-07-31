@@ -1,0 +1,75 @@
+buildscript {
+  repositories {
+    mavenCentral()
+    maven { url 'https://oss.sonatype.org/content/groups/public' }
+  }
+  dependencies {
+    classpath 'com.github.townsfolk:gradle-release:1.2'
+  }
+}
+
+task wrapper(type: Wrapper) {
+  gradleVersion = '1.12'
+}
+
+apply plugin: 'release'
+
+allprojects {
+  apply plugin: 'java'
+  apply plugin: 'maven'
+  apply plugin: 'eclipse'
+  apply plugin: 'idea'
+
+  sourceCompatibility = 1.8
+  targetCompatibility = 1.8
+
+  // UTF-8 should be standard by now. So use it!
+  [compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
+
+  group = 'org.ardverk.patricia'
+
+  repositories {
+    mavenCentral()
+    mavenLocal()
+  }
+
+  //configurations {
+  //  all*.exclude group: 'commons-logging', module: 'commons-logging'
+  //  all*.exclude group: 'log4j', module: 'log4j'
+  //  all*.exclude group: 'junit', module: 'junit'
+  //  deployerJars
+  //}
+
+  project.ext {
+    releaseRepositoryUrl = ''
+    snapshotRepositoryUrl = ''
+  }
+  
+  //test {
+  //  useTestNG()
+  //}
+}
+
+dependencies {
+  testCompile 'junit:junit:4.8.2'
+}
+
+task sourcesJar(type: Jar, dependsOn: classes) {
+  classifier = 'sources'
+  from sourceSets.main.allSource
+}
+
+artifacts {
+  archives sourcesJar
+}
+
+uploadArchives {
+  repositories {
+    mavenDeployer {
+      repository(url: project.releaseRepositoryUrl)
+      snapshotRepository(url: project.snapshotRepositoryUrl)
+    }
+  }
+}
+
+createReleaseTag.dependsOn ':uploadArchives'
