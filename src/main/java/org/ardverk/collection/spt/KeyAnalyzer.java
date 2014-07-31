@@ -5,7 +5,7 @@
  *   you may not use this file except in compliance with the License.
  *   You may obtain a copy of the License at
  *
- *       http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  *   Unless required by applicable law or agreed to in writing, software
  *   distributed under the License is distributed on an "AS IS" BASIS,
@@ -21,25 +21,25 @@ package org.ardverk.collection.spt;
  */
 public interface KeyAnalyzer<K> {
 
-    /**
-     * Returned by {@link #bitIndex(Object, Object)} if the first
-     * argument is either {@code null} or if all bits were 0s.
-     */
-    public static final int NULL_KEY = -1;
-    
-    /**
-     * Returned by {@link #bitIndex(Object, Object)} if both arguments
-     * were equal.
-     */
-    public static final int EQUAL_KEY = -2;
-    
-    /**
-     * Returns {@code true} if the key's bit at the given bit index is set.
-     */
-    public boolean isSet(K key, int bitIndex);
-    
-    /**
-     * Returns the first bit that's different in the given keys.
-     */
-    public int bitIndex(K key, K otherKey);
+  /**
+   * Returned by {@link #bitIndex(Object, Object)} if the first
+   * argument is either {@code null} or if all bits were 0s.
+   */
+  public static final int NULL_KEY = -1;
+  
+  /**
+   * Returned by {@link #bitIndex(Object, Object)} if both arguments
+   * were equal.
+   */
+  public static final int EQUAL_KEY = -2;
+  
+  /**
+   * Returns {@code true} if the key's bit at the given bit index is set.
+   */
+  public boolean isSet(K key, int bitIndex);
+  
+  /**
+   * Returns the first bit that's different in the given keys.
+   */
+  public int bitIndex(K key, K otherKey);
 }
