@@ -26,7 +26,7 @@ allprojects {
   // UTF-8 should be standard by now. So use it!
   [compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
 
-  group = 'org.ardverk.patricia'
+  group = 'org.ardverk.patricia-trie'
 
   repositories {
     mavenCentral()
